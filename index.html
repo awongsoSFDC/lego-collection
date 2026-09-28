@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧱 My LEGO Technic Collection</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+:root {
+  --yellow: #F5C400;
+  --yellow-dark: #c99f00;
+  --red: #CC0000;
+  --blue: #006DB7;
+  --dark: #1a1a2e;
+  --dark2: #16213e;
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --muted: #64748b;
+  --green: #16a34a;
+  --green-bg: #dcfce7;
+  --amber-bg: #fef9c3;
+  --amber: #92400e;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-hover: 0 4px 12px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,var(--dark) 0%,var(--dark2) 100%);color:white;padding:0 32px;height:70px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,0.3);position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-icon{font-size:32px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))}
+.header-title{font-size:20px;font-weight:800;letter-spacing:-0.3px}
+.header-sub{font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px}
+.header-right{display:flex;align-items:center;gap:12px}
+.badge-count{background:var(--yellow);color:var(--dark);padding:5px 14px;border-radius:20px;font-size:13px;font-weight:800}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* CONTAINER */
+.container{max-width:1440px;margin:0 auto;padding:28px 24px}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat{background:var(--card);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);border-top:3px solid var(--yellow);position:relative;overflow:hidden}
+.stat::after{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:0.05}
+.stat.blue{border-top-color:var(--blue)}.stat.blue::after{background:var(--blue)}
+.stat.green{border-top-color:var(--green)}.stat.green::after{background:var(--green)}
+.stat.red{border-top-color:var(--red)}.stat.red::after{background:var(--red)}
+.stat-icon{font-size:22px;margin-bottom:8px}
+.stat-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.6px}
+.stat-value{font-size:30px;font-weight:900;line-height:1;margin:4px 0 2px;color:var(--dark)}
+.stat-sub{font-size:12px;color:var(--muted)}
+
+/* CHECKER */
+.checker{background:linear-gradient(135deg,var(--dark) 0%,#0f3460 100%);border-radius:16px;padding:28px 32px;margin-bottom:24px;box-shadow:var(--shadow)}
+.checker-label{font-size:13px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.checker-wrap{position:relative}
+.checker-input{width:100%;padding:16px 50px 16px 20px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);border-radius:12px;font-size:15px;color:white;outline:none;transition:border-color 0.2s,background 0.2s}
+.checker-input::placeholder{color:rgba(255,255,255,0.35)}
+.checker-input:focus{border-color:var(--yellow);background:rgba(255,255,255,0.12)}
+.checker-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none}
+.checker-result{margin-top:14px;padding:14px 18px;border-radius:10px;font-size:14px;display:none;animation:fadeIn 0.2s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.result-have{background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#86efac}
+.result-nope{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#fca5a5}
+.result-title{font-weight:700;font-size:15px;margin-bottom:6px}
+.result-item{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;font-size:13px;color:rgba(255,255,255,0.8)}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.search-box{flex:1;min-width:220px;position:relative}
+.search-box input{width:100%;padding:10px 16px 10px 40px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--card);outline:none;transition:border-color 0.2s}
+.search-box input:focus{border-color:var(--blue)}
+.search-box::before{content:'🔎';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px}
+.filter-sel{padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--card);cursor:pointer;outline:none;color:var(--text)}
+.filter-sel:focus{border-color:var(--blue)}
+.view-toggle{display:flex;background:var(--border);border-radius:10px;padding:3px;gap:3px}
+.view-btn{padding:7px 16px;border:none;border-radius:8px;font-size:13px;cursor:pointer;background:transparent;color:var(--muted);font-weight:600;transition:all 0.15s}
+.view-btn.active{background:var(--card);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.12)}
+.result-count{font-size:13px;color:var(--muted);padding:2px 0;white-space:nowrap;align-self:center}
+
+/* TABLE */
+.table-wrap{background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead th{background:var(--dark);color:white;padding:13px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none}
+thead th:hover{background:#2d2d4e}
+thead th .sort-icon{margin-left:5px;opacity:0.4;font-size:10px}
+thead th.sort-asc .sort-icon,thead th.sort-desc .sort-icon{opacity:1}
+thead th.sort-asc .sort-icon::after{content:'▲'}
+thead th.sort-desc .sort-icon::after{content:'▼'}
+thead th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅'}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.1s}
+tbody tr:hover{background:#f8faff}
+tbody tr:last-child{border-bottom:none}
+td{padding:11px 16px;vertical-align:middle}
+.code-badge{display:inline-block;background:var(--yellow);color:var(--dark);padding:3px 9px;border-radius:6px;font-weight:800;font-size:12px;white-space:nowrap}
+.name-cell{font-weight:600;color:var(--dark);max-width:280px}
+.set-img{width:64px;height:48px;object-fit:contain;border-radius:6px;background:#f8f9fa;border:1px solid var(--border);flex-shrink:0}
+.name-with-img{display:flex;align-items:center;gap:10px}
+.card-img{width:100%;height:140px;object-fit:contain;background:#f8f9fa;border-bottom:1px solid var(--border);padding:10px}
+.year-cell{color:var(--muted);font-size:13px;white-space:nowrap}
+.price-cell{font-weight:700;color:var(--blue);white-space:nowrap;font-size:13px}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.pill-done{background:var(--green-bg);color:var(--green)}
+.pill-pending{background:var(--amber-bg);color:var(--amber)}
+.price-links{display:flex;gap:5px;flex-wrap:nowrap}
+.pl{padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;transition:opacity 0.15s}
+.pl:hover{opacity:0.85}
+.pl-bl{background:#003580;color:white}
+.pl-tp{background:#42b549;color:white}
+.pl-sp{background:#EE4D2D;color:white}
+/* market prices */
+.mkt-wrap{display:flex;flex-direction:column;gap:4px;min-width:160px}
+.mkt-row{display:flex;align-items:center;gap:6px;font-size:12px}
+.mkt-label{font-weight:700;min-width:22px;font-size:11px}
+.mkt-label.bl{color:#003580}.mkt-label.tp{color:#2e7d32}.mkt-label.sp{color:#c62828}
+.mkt-price{font-weight:700;color:var(--dark)}
+.mkt-checking{color:var(--muted);font-style:italic;font-size:11px;animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+.mkt-fail{color:var(--muted);font-size:11px}
+.mkt-link{font-size:11px;color:inherit;text-decoration:underline;opacity:0.7}
+.mkt-link:hover{opacity:1}
+
+/* CARDS */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.lcard{background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;transition:transform 0.15s,box-shadow 0.15s}
+.lcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
+.lcard-head{background:var(--dark);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.lcard-body{padding:16px}
+.lcard-name{font-size:14px;font-weight:700;margin-bottom:10px;line-height:1.35;color:var(--dark)}
+.lcard-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.lcard-year{font-size:12px;color:var(--muted)}
+.lcard-price{font-size:15px;font-weight:800;color:var(--blue)}
+.lcard-links{display:flex;gap:5px}
+
+/* CHART */
+.chart-wrap{background:var(--card);border-radius:14px;padding:24px;box-shadow:var(--shadow);margin-top:24px}
+.chart-title{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px}
+.chart-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+.chart-canvas{height:300px}
+
+/* LOADING & EMPTY */
+.loading{text-align:center;padding:60px 20px;color:var(--muted)}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--yellow);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:48px;color:var(--muted);font-size:14px}
+.empty span{font-size:32px;display:block;margin-bottom:10px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .header-title{font-size:16px}
+  .container{padding:16px}
+  .checker{padding:20px}
+  .stat-value{font-size:24px}
+}
+@media(max-width:480px){
+  .stats-row{grid-template-columns:1fr}
+  .header{padding:0 16px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <span class="header-icon">🧱</span>
+    <div>
+      <div class="header-title">My LEGO Technic Collection</div>
+      <div class="header-sub" id="lastUpdate">Syncing from Google Sheets...</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="sync-dot" title="Live data"></div>
+    <div class="badge-count" id="headerCount">— Sets</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-icon">📦</div>
+      <div class="stat-label">Total Sets</div>
+      <div class="stat-value" id="st-total">–</div>
+      <div class="stat-sub">In collection</div>
+    </div>
+    <div class="stat blue">
+      <div class="stat-icon">💰</div>
+      <div class="stat-label">Total Value</div>
+      <div class="stat-value" id="st-value">–</div>
+      <div class="stat-sub">Purchase price</div>
+    </div>
+    <div class="stat green">
+      <div class="stat-icon">✅</div>
+      <div class="stat-label">Assembled</div>
+      <div class="stat-value" id="st-done">–</div>
+      <div class="stat-sub" id="st-done-pct">–</div>
+    </div>
+    <div class="stat red">
+      <div class="stat-icon">📫</div>
+      <div class="stat-label">Not Yet Built</div>
+      <div class="stat-value" id="st-pending">–</div>
+      <div class="stat-sub" id="st-pending-pct">–</div>
+    </div>
+  </div>
+
+  <!-- CHECKER -->
+  <div class="checker">
+    <div class="checker-label">🔍 Do I Have This Set?</div>
+    <div class="checker-wrap">
+      <input class="checker-input" id="checkerInput" type="text" autocomplete="off"
+             placeholder="Search by set name or number — e.g. '42171' or 'Ferrari'..."
+             oninput="runChecker()">
+      <span class="checker-icon">🧱</span>
+    </div>
+    <div class="checker-result" id="checkerResult"></div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Filter collection by name or code..."
+             oninput="applyFilters()" autocomplete="off">
+    </div>
+    <select class="filter-sel" id="yearFilter" onchange="applyFilters()">
+      <option value="">All Years</option>
+    </select>
+    <select class="filter-sel" id="statusFilter" onchange="applyFilters()">
+      <option value="">All Status</option>
+      <option value="done">✅ Assembled</option>
+      <option value="pending">📦 Not Yet Built</option>
+    </select>
+    <span class="result-count" id="resultCount"></span>
+    <div class="view-toggle">
+      <button class="view-btn active" id="btnTable" onclick="setView('table')">☰ Table</button>
+      <button class="view-btn" id="btnCards" onclick="setView('cards')">⊞ Cards</button>
+    </div>
+  </div>
+
+  <!-- COLLECTION -->
+  <div id="collectionWrap">
+    <div class="loading"><div class="spinner"></div>Loading your collection...</div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-wrap">
+    <div class="chart-title">📊 Collection by Release Year</div>
+    <div class="chart-sub">Number of sets and total purchase value per year</div>
+    <div class="chart-canvas"><canvas id="yearChart"></canvas></div>
+  </div>
+
+</div>
+
+<script>
+const SHEET_ID  = '11W77Za8Po6YSctQtocFiBT__v442mwO_IKkX1QPYpt0';
+const SHEET_GID = '0';
+
+let allSets      = [];
+let filteredSets = [];
+let currentView  = 'table';
+let chart        = null;
+let sortKey      = null;   // 'code' | 'name' | 'year' | 'price'
+let sortDir      = 'asc';  // 'asc' | 'desc'
+
+/* ── Fetch via JSONP (works from file:// and any origin) ── */
+function fetchData() {
+  return new Promise((resolve, reject) => {
+    const cbName = '__legoCb_' + Date.now();
+
+    window[cbName] = function(response) {
+      // cleanup
+      delete window[cbName];
+      const tag = document.getElementById('_gvizScript');
+      if (tag) tag.remove();
+
+      try {
+        const rows = response.table.rows;
+
+        let lastUpdate = '';
+        try { lastUpdate = rows[0]?.c?.[1]?.v || ''; } catch(e){}
+
+        const sets = [];
+        // Scan ALL rows — a data row is identified by column B being a numeric LEGO set code (4+ digits)
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          if (!r?.c) continue;
+
+          const code = (r.c[1]?.v ?? r.c[1]?.f ?? '').toString().trim();
+          if (!/^\d{4,}$/.test(code)) continue;   // skip non-set rows (headers, last-update, empty)
+
+          const name     = (r.c[2]?.v || '').toString().trim();
+          const year     = (r.c[3]?.v ?? '').toString();
+          const priceRaw = r.c[4]?.v ?? r.c[4]?.f ?? 0;
+          const pasang   = (r.c[6]?.v ?? '').toString();
+
+          if (!name) continue;
+
+          sets.push({
+            code, name, year,
+            price: parsePrice(priceRaw),
+            assembled: pasang.toLowerCase() === 'done'
+          });
+        }
+        resolve({ sets, lastUpdate });
+      } catch(e) { reject(e); }
+    };
+
+    const script = document.createElement('script');
+    script.id  = '_gvizScript';
+    script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq`
+               + `?tqx=out:json;responseHandler:${cbName}&gid=${SHEET_GID}&headers=0`;
+    script.onerror = () => { delete window[cbName]; reject(new Error('Script load failed')); };
+    document.head.appendChild(script);
+
+    setTimeout(() => {
+      if (window[cbName]) { delete window[cbName]; reject(new Error('Request timed out')); }
+    }, 15000);
+  });
+}
+
+function parsePrice(val) {
+  if (!val && val !== 0) return 0;
+  if (typeof val === 'number') return val;
+  return parseInt(val.toString().replace(/[^0-9]/g, '')) || 0;
+}
+
+function fmtPrice(p) {
+  if (!p) return 'Rp –';
+  return 'Rp ' + p.toLocaleString('id-ID');
+}
+
+/* ── Image ── */
+const imgUrl  = c => `https://img.bricklink.com/ItemImage/SN/0/${c}-1.png`;
+const imgHtml = (c, size='sm') => {
+  const cls = size === 'lg' ? 'card-img' : 'set-img';
+  return `<img class="${cls}" src="${imgUrl(c)}" alt=""
+    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2248%22><rect width=%2264%22 height=%2248%22 fill=%22%23f0f0f0%22 rx=%226%22/><text x=%2232%22 y=%2228%22 text-anchor=%22middle%22 font-size=%2218%22>🧱</text></svg>'"
+    loading="lazy">`;
+};
+
+/* ── Links ── */
+const urlBL = c => `https://www.bricklink.com/v2/catalog/catalogitem.page?S=${c}-1`;
+const urlTP = c => `https://www.tokopedia.com/search?st=product&q=lego+${c}`;
+const urlSP = c => `https://shopee.co.id/search?keyword=lego+${encodeURIComponent(c)}`;
+
+/* ── Market price HTML (BL fetched live, TP/SP = search links) ── */
+function mktPriceHtml(code) {
+  return `<div class="mkt-wrap" id="mkt-${code}">
+    <div class="mkt-row">
+      <span class="mkt-label bl">BL</span>
+      <span class="mkt-checking" id="bl-${code}">checking…</span>
+    </div>
+    <div class="mkt-row">
+      <span class="mkt-label tp">TP</span>
+      <a class="mkt-link" href="${urlTP(code)}" target="_blank">Search Tokopedia →</a>
+    </div>
+    <div class="mkt-row">
+      <span class="mkt-label sp">SP</span>
+      <a class="mkt-link" href="${urlSP(code)}" target="_blank">Search Shopee →</a>
+    </div>
+  </div>`;
+}
+
+/* ── BrickLink price engine ── */
+const PROXY    = 'https://api.allorigins.win/get?url=';
+const CACHE_MS = 24 * 60 * 60 * 1000; // 24 h
+const RATE_MS  = 350;                  // ms between requests
+let   priceQueue = [];
+let   queueRunning = false;
+
+function fmtRp(n) {
+  return 'Rp ' + Math.round(n).toLocaleString('id-ID');
+}
+
+function setCachedPrice(code, rp) {
+  try { localStorage.setItem(`bl_${code}`, JSON.stringify({ rp, ts: Date.now() })); } catch(e){}
+}
+function getCachedPrice(code) {
+  try {
+    const raw = localStorage.getItem(`bl_${code}`);
+    if (!raw) return null;
+    const { rp, ts } = JSON.parse(raw);
+    return Date.now() - ts < CACHE_MS ? rp : null;
+  } catch(e) { return null; }
+}
+
+function updateBLCell(code, rp) {
+  const el = document.getElementById(`bl-${code}`);
+  if (!el) return;
+  if (rp) {
+    el.outerHTML = `<span class="mkt-price">${fmtRp(rp)}</span>`;
+  } else {
+    el.outerHTML = `<a class="mkt-link mkt-fail" href="${urlBL(code)}" target="_blank">View on BrickLink →</a>`;
+  }
+}
+
+async function fetchBLPriceRemote(code) {
+  const blUrl = `https://www.bricklink.com/catalogPG.asp?S=${code}-1&colorID=0`;
+  const res   = await fetch(PROXY + encodeURIComponent(blUrl), { signal: AbortSignal.timeout(10000) });
+  const data  = await res.json();
+  const html  = data.contents || '';
+
+  // BrickLink price guide shows multiple "US $XX.XX" values;
+  // grab ALL of them and return the median as a stable "avg" estimate
+  const matches = [...html.matchAll(/US\s*\$\s*([\d,]+\.\d{2})/gi)];
+  const prices  = matches
+    .map(m => parseFloat(m[1].replace(',', '')))
+    .filter(p => p > 0 && p < 10000);
+
+  if (!prices.length) return null;
+  prices.sort((a, b) => a - b);
+  const mid = Math.floor(prices.length / 2);
+  const usd = prices.length % 2 === 0 ? (prices[mid-1] + prices[mid]) / 2 : prices[mid];
+
+  // Convert USD → IDR (fetch live rate once, then cache)
+  const idr = await usdToIdr(usd);
+  return idr;
+}
+
+let usdIdrRate = null;
+async function usdToIdr(usd) {
+  if (!usdIdrRate) {
+    try {
+      const r = await fetch('https://open.er-api.com/v6/latest/USD', { signal: AbortSignal.timeout(5000) });
+      const d = await r.json();
+      usdIdrRate = d.rates?.IDR || 15800;
+    } catch(e) { usdIdrRate = 15800; }
+  }
+  return Math.round(usd * usdIdrRate);
+}
+
+function queueBLFetch(code) {
+  const cached = getCachedPrice(code);
+  if (cached !== null) { updateBLCell(code, cached); return; }
+  priceQueue.push(code);
+  if (!queueRunning) drainQueue();
+}
+
+async function drainQueue() {
+  queueRunning = true;
+  while (priceQueue.length) {
+    const code = priceQueue.shift();
+    if (getCachedPrice(code) !== null) { updateBLCell(code, getCachedPrice(code)); continue; }
+    try {
+      const rp = await fetchBLPriceRemote(code);
+      setCachedPrice(code, rp);
+      updateBLCell(code, rp);
+    } catch(e) { updateBLCell(code, null); }
+    if (priceQueue.length) await new Promise(r => setTimeout(r, RATE_MS));
+  }
+  queueRunning = false;
+}
+
+/* ── Stats ── */
+function updateStats(sets) {
+  const total   = sets.length;
+  const totVal  = sets.reduce((s, x) => s + x.price, 0);
+  const done    = sets.filter(x => x.assembled).length;
+  const pending = total - done;
+
+  document.getElementById('st-total').textContent  = total;
+  document.getElementById('st-value').textContent  = totVal >= 1e6
+    ? 'Rp ' + (totVal/1e6).toFixed(1) + 'M'
+    : fmtPrice(totVal);
+  document.getElementById('st-done').textContent   = done;
+  document.getElementById('st-done-pct').textContent   = `${Math.round(done/total*100)}% of collection`;
+  document.getElementById('st-pending').textContent    = pending;
+  document.getElementById('st-pending-pct').textContent = `${Math.round(pending/total*100)}% of collection`;
+  document.getElementById('headerCount').textContent   = `${total} Sets`;
+}
+
+/* ── Year filter ── */
+function populateYearFilter(sets) {
+  const years = [...new Set(sets.map(s => s.year))].filter(Boolean).sort((a,b) => b-a);
+  const sel = document.getElementById('yearFilter');
+  years.forEach(y => { const o = document.createElement('option'); o.value = o.textContent = y; sel.appendChild(o); });
+}
+
+/* ── Sort ── */
+function sortSets(sets) {
+  if (!sortKey) return sets;
+  return [...sets].sort((a, b) => {
+    let va = a[sortKey], vb = b[sortKey];
+    if (sortKey === 'price' || sortKey === 'year') { va = Number(va); vb = Number(vb); }
+    else { va = va?.toString().toLowerCase(); vb = vb?.toString().toLowerCase(); }
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ?  1 : -1;
+    return 0;
+  });
+}
+
+function toggleSort(key) {
+  if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortKey = key; sortDir = 'asc'; }
+  render(filteredSets);
+}
+
+function thHtml(label, key) {
+  const cls = sortKey === key ? `sort-${sortDir}` : '';
+  return `<th class="${cls}" onclick="toggleSort('${key}')">${label}<span class="sort-icon"></span></th>`;
+}
+
+/* ── Render table ── */
+function renderTable(sets) {
+  if (!sets.length) return `<div class="empty"><span>🔍</span>No sets match your filter.</div>`;
+  const sorted = sortSets(sets);
+  return `<div class="table-wrap"><table>
+    <thead><tr>
+      ${thHtml('Set No.','code')}${thHtml('Name','name')}${thHtml('Year','year')}
+      ${thHtml('Purchase Price','price')}
+      <th>Build Status</th><th>Check Current Price</th>
+    </tr></thead>
+    <tbody>${sorted.map(s => `
+      <tr>
+        <td><span class="code-badge">${s.code}</span></td>
+        <td class="name-cell"><div class="name-with-img">${imgHtml(s.code)}<span>${s.name}</span></div></td>
+        <td class="year-cell">${s.year}</td>
+        <td class="price-cell">${fmtPrice(s.price)}</td>
+        <td><span class="status-pill ${s.assembled ? 'pill-done' : 'pill-pending'}">${s.assembled ? '✅ Assembled' : '📦 Not Built'}</span></td>
+        <td>${mktPriceHtml(s.code)}</td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+/* ── Render cards ── */
+function renderCards(sets) {
+  if (!sets.length) return `<div class="empty"><span>🔍</span>No sets match your filter.</div>`;
+  return `<div class="cards-grid">${sets.map(s => `
+    <div class="lcard">
+      ${imgHtml(s.code, 'lg')}
+      <div class="lcard-head">
+        <span class="code-badge">${s.code}</span>
+        <span class="status-pill ${s.assembled ? 'pill-done' : 'pill-pending'}">${s.assembled ? '✅ Built' : '📦 Unbuilt'}</span>
+      </div>
+      <div class="lcard-body">
+        <div class="lcard-name">${s.name}</div>
+        <div class="lcard-meta">
+          <span class="lcard-year">📅 ${s.year}</span>
+          <span class="lcard-price">${fmtPrice(s.price)}</span>
+        </div>
+        <div class="lcard-links">${mktPriceHtml(s.code)}</div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+/* ── Render ── */
+function render(sets) {
+  document.getElementById('resultCount').textContent = `${sets.length} of ${allSets.length} sets`;
+  document.getElementById('collectionWrap').innerHTML =
+    currentView === 'table' ? renderTable(sets) : renderCards(sets);
+  // Queue BrickLink price fetches for all visible sets
+  priceQueue = [];
+  sets.forEach(s => queueBLFetch(s.code));
+}
+
+/* ── Filters ── */
+function applyFilters() {
+  const q      = document.getElementById('searchInput').value.toLowerCase().trim();
+  const year   = document.getElementById('yearFilter').value;
+  const status = document.getElementById('statusFilter').value;
+
+  filteredSets = allSets.filter(s => {
+    const mq = !q || s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q);
+    const my = !year   || s.year === year;
+    const ms = !status || (status==='done' && s.assembled) || (status==='pending' && !s.assembled);
+    return mq && my && ms;
+  });
+  render(filteredSets);
+}
+
+/* ── View toggle ── */
+function setView(v) {
+  currentView = v;
+  document.getElementById('btnTable').classList.toggle('active', v==='table');
+  document.getElementById('btnCards').classList.toggle('active', v==='cards');
+  render(filteredSets);
+}
+
+/* ── Checker ── */
+function runChecker() {
+  const q   = document.getElementById('checkerInput').value.trim().toLowerCase();
+  const el  = document.getElementById('checkerResult');
+  if (!q) { el.style.display='none'; return; }
+
+  const hits = allSets.filter(s =>
+    s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q)
+  );
+
+  el.style.display = 'block';
+  if (hits.length) {
+    const items = hits.map(m =>
+      `<div class="result-item">
+        ${imgHtml(m.code)}
+        <span class="code-badge" style="font-size:11px">${m.code}</span>
+        <span><strong>${m.name}</strong> · ${m.year} · ${fmtPrice(m.price)}</span>
+        <span class="status-pill ${m.assembled ? 'pill-done' : 'pill-pending'}" style="margin-left:auto">
+          ${m.assembled ? '✅ Assembled' : '📦 Not Built'}
+        </span>
+        <span style="margin-left:6px;font-size:11px;color:rgba(255,255,255,0.6)">BL: <span id="bl-${m.code}" class="mkt-checking" style="color:rgba(255,255,255,0.5)">checking…</span></span>
+      </div>`
+    ).join('');
+    hits.forEach(m => queueBLFetch(m.code));
+    el.className = 'checker-result result-have';
+    el.innerHTML = `<div class="result-title">✅ Yes! You have ${hits.length > 1 ? hits.length + ' matching sets' : 'this set'}.</div>${items}`;
+  } else {
+    el.className = 'checker-result result-nope';
+    el.innerHTML = `<div class="result-title">❌ Not in your collection.</div>
+      <div style="margin-top:4px;font-size:13px;opacity:0.8">This set is not in your Google Sheet — you don't own it yet.</div>`;
+  }
+}
+
+/* ── Chart ── */
+function buildChart(sets) {
+  const byYear = {};
+  sets.forEach(s => {
+    if (!s.year) return;
+    byYear[s.year] = byYear[s.year] || { count:0, value:0 };
+    byYear[s.year].count++;
+    byYear[s.year].value += s.price;
+  });
+
+  const years  = Object.keys(byYear).sort();
+  const counts = years.map(y => byYear[y].count);
+  const values = years.map(y => Math.round(byYear[y].value / 1000));
+
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('yearChart'), {
+    type: 'bar',
+    data: {
+      labels: years,
+      datasets: [
+        { label: 'Sets', data: counts, backgroundColor: '#F5C400',
+          borderRadius: 6, yAxisID: 'yL', order: 2 },
+        { label: 'Value (Rp000)', data: values, type: 'line',
+          borderColor: '#006DB7', backgroundColor: 'rgba(0,109,183,0.1)',
+          borderWidth: 2.5, pointBackgroundColor: '#006DB7', pointRadius: 4,
+          fill: true, tension: 0.3, yAxisID: 'yR', order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.datasetIndex===0
+              ? `${ctx.raw} sets`
+              : `Rp ${ctx.raw.toLocaleString('id-ID')}K`
+          }
+        }
+      },
+      scales: {
+        yL: { type:'linear', position:'left', title:{display:true,text:'Number of Sets'}, ticks:{stepSize:1}, grid:{color:'rgba(0,0,0,0.05)'} },
+        yR: { type:'linear', position:'right', title:{display:true,text:'Total Value (Rp000)'}, grid:{drawOnChartArea:false} }
+      }
+    }
+  });
+}
+
+/* ── Init ── */
+async function init() {
+  try {
+    const { sets, lastUpdate } = await fetchData();
+    allSets      = sets;
+    filteredSets = [...sets];
+
+    document.getElementById('lastUpdate').textContent =
+      lastUpdate ? `Last updated: ${lastUpdate} · Live from Google Sheets` : 'Live from Google Sheets';
+
+    if (!sets.length) {
+      document.getElementById('collectionWrap').innerHTML =
+        '<div class="empty"><span>⚠️</span>Could not load sets. Make sure the Google Sheet is set to public.</div>';
+      return;
+    }
+
+    updateStats(sets);
+    populateYearFilter(sets);
+    render(sets);
+    buildChart(sets);
+
+  } catch(err) {
+    console.error(err);
+    document.getElementById('collectionWrap').innerHTML =
+      '<div class="empty"><span>⚠️</span>Failed to load data. Check console for details.</div>';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
