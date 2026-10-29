@@ -264,7 +264,7 @@ let allSets      = [];
 let filteredSets = [];
 let currentView  = 'table';
 let chart        = null;
-let sortKey      = null;   // 'code' | 'name' | 'year' | 'price'
+let sortKey      = null;   // 'code' | 'name' | 'year' | 'price' | 'pieces'
 let sortDir      = 'asc';  // 'asc' | 'desc'
 
 /* ── Fetch via JSONP (works from file:// and any origin) ── */
@@ -296,6 +296,7 @@ function fetchData() {
           const name     = (r.c[2]?.v || '').toString().trim();
           const year     = (r.c[3]?.v ?? '').toString();
           const priceRaw = r.c[4]?.v ?? r.c[4]?.f ?? 0;
+          const piecesRaw = r.c[7]?.v ?? r.c[7]?.f ?? 0;
           const pasang   = (r.c[6]?.v ?? '').toString();
 
           if (!name) continue;
@@ -303,6 +304,7 @@ function fetchData() {
           sets.push({
             code, name, year,
             price: parsePrice(priceRaw),
+            pieces: parseInt(piecesRaw) || 0,
             assembled: pasang.toLowerCase() === 'done'
           });
         }
@@ -486,7 +488,7 @@ function sortSets(sets) {
   if (!sortKey) return sets;
   return [...sets].sort((a, b) => {
     let va = a[sortKey], vb = b[sortKey];
-    if (sortKey === 'price' || sortKey === 'year') { va = Number(va); vb = Number(vb); }
+    if (sortKey === 'price' || sortKey === 'year' || sortKey === 'pieces') { va = Number(va); vb = Number(vb); }
     else { va = va?.toString().toLowerCase(); vb = vb?.toString().toLowerCase(); }
     if (va < vb) return sortDir === 'asc' ? -1 : 1;
     if (va > vb) return sortDir === 'asc' ?  1 : -1;
@@ -512,7 +514,7 @@ function renderTable(sets) {
   return `<div class="table-wrap"><table>
     <thead><tr>
       ${thHtml('Set No.','code')}${thHtml('Name','name')}${thHtml('Year','year')}
-      ${thHtml('Purchase Price','price')}
+      ${thHtml('Purchase Price','price')}${thHtml('Pieces','pieces')}
       <th>Build Status</th><th>Check Current Price</th>
     </tr></thead>
     <tbody>${sorted.map(s => `
@@ -521,6 +523,7 @@ function renderTable(sets) {
         <td class="name-cell"><div class="name-with-img">${imgHtml(s.code)}<span>${s.name}</span></div></td>
         <td class="year-cell">${s.year}</td>
         <td class="price-cell">${fmtPrice(s.price)}</td>
+        <td class="year-cell">${s.pieces ? s.pieces.toLocaleString('id-ID') : '–'}</td>
         <td><span class="status-pill ${s.assembled ? 'pill-done' : 'pill-pending'}">${s.assembled ? '✅ Assembled' : '📦 Not Built'}</span></td>
         <td>${mktPriceHtml(s.code)}</td>
       </tr>`).join('')}
