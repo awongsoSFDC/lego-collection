@@ -296,13 +296,14 @@ function fetchData() {
           const name     = (r.c[2]?.v || '').toString().trim();
           const year     = (r.c[3]?.v ?? '').toString();
           const priceRaw = r.c[4]?.v ?? r.c[4]?.f ?? 0;
-          const piecesRaw = r.c[7]?.v ?? r.c[7]?.f ?? 0;
+          const img      = extractImgUrl(r.c[9]);
           const pasang   = (r.c[6]?.v ?? '').toString();
+          const piecesRaw = r.c[7]?.v ?? r.c[7]?.f ?? 0;
 
           if (!name) continue;
 
           sets.push({
-            code, name, year,
+            code, name, year, img,
             price: parsePrice(priceRaw),
             pieces: parseInt(piecesRaw) || 0,
             assembled: pasang.toLowerCase() === 'done'
@@ -325,6 +326,39 @@ function fetchData() {
   });
 }
 
+/* ── Extract image URL from a GViz cell ──
+   Handles: bare Drive file ID, full Drive URL, =IMAGE("url") formula, plain URL */
+function extractImgUrl(cell) {
+  if (!cell) return '';
+
+  const v = (cell.v || '').toString().trim();
+
+  // bare Google Drive file ID (alphanumeric/dash/underscore, 20+ chars, no spaces)
+  if (v && /^[A-Za-z0-9_-]{20,}$/.test(v))
+    return driveThumb(v);
+
+  // full URL (Drive share link or any direct image URL)
+  if (v && v.startsWith('http')) return convertDriveUrl(v);
+
+  // =IMAGE("https://...") formula
+  const f = (cell.f || '').toString();
+  const m = f.match(/IMAGE\s*\(\s*"([^"]+)"/i);
+  if (m) return convertDriveUrl(m[1]);
+
+  return '';
+}
+
+/* Convert any Drive URL/ID → thumbnail endpoint (no HTML redirect, no CORB) */
+function convertDriveUrl(url) {
+  const m = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
+  if (m) return driveThumb(m[1]);
+  return url;
+}
+
+function driveThumb(id) {
+  return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w200-h150';
+}
+
 function parsePrice(val) {
   if (!val && val !== 0) return 0;
   if (typeof val === 'number') return val;
@@ -337,12 +371,39 @@ function fmtPrice(p) {
 }
 
 /* ── Image ── */
+const imgFallback = "data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2248%22%3E%3Crect width=%2264%22 height=%2248%22 fill=%22%23f0f2f5%22 rx=%226%22/%3E%3Ctext x=%2232%22 y=%2230%22 text-anchor=%22middle%22 font-size=%2218%22%3E%F0%9F%A7%B1%3C/text%3E%3C/svg%3E";
+
+// Replace broken img with a styled set-number tile (always works, no external deps)
+window.__imgErr = function(el) {
+  el.onerror = null;
+  const isLg = el.classList.contains('card-img');
+  const div = document.createElement('div');
+  div.className = el.className;
+  div.style.cssText = [
+    'display:flex', 'align-items:center', 'justify-content:center',
+    'flex-direction:column', 'gap:4px',
+    'background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)',
+    'border-radius:6px', 'border:1px solid #2d2d4e',
+    isLg ? 'height:140px' : 'width:64px;height:48px'
+  ].join(';');
+  const num = document.createElement('span');
+  num.textContent = el.dataset.code;
+  num.style.cssText = `font-size:${isLg?'16':'10'}px;font-weight:900;color:#F5C400;letter-spacing:0.5px;font-family:monospace`;
+  const lbl = document.createElement('span');
+  lbl.textContent = '🧱';
+  lbl.style.cssText = `font-size:${isLg?'28':'16'}px`;
+  div.appendChild(lbl);
+  div.appendChild(num);
+  el.replaceWith(div);
+};
+
 const imgUrl  = c => `https://img.bricklink.com/ItemImage/SN/0/${c}-1.png`;
-const imgHtml = (c, size='sm') => {
+const imgHtml = (img, c, size='sm') => {
   const cls = size === 'lg' ? 'card-img' : 'set-img';
-  return `<img class="${cls}" src="${imgUrl(c)}" alt=""
-    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2248%22><rect width=%2264%22 height=%2248%22 fill=%22%23f0f0f0%22 rx=%226%22/><text x=%2232%22 y=%2228%22 text-anchor=%22middle%22 font-size=%2218%22>🧱</text></svg>'"
-    loading="lazy">`;
+  const src = img || imgUrl(c);
+  // referrerpolicy="no-referrer" prevents browser sending Referer header → bypasses hotlink check
+  return `<img class="${cls}" src="${src}" alt="${c}" data-code="${c}"
+    referrerpolicy="no-referrer" onerror="__imgErr(this)" loading="lazy">`;
 };
 
 /* ── Links ── */
@@ -520,7 +581,7 @@ function renderTable(sets) {
     <tbody>${sorted.map(s => `
       <tr>
         <td><span class="code-badge">${s.code}</span></td>
-        <td class="name-cell"><div class="name-with-img">${imgHtml(s.code)}<span>${s.name}</span></div></td>
+        <td class="name-cell"><div class="name-with-img">${imgHtml(s.img, s.code)}<span>${s.name}</span></div></td>
         <td class="year-cell">${s.year}</td>
         <td class="price-cell">${fmtPrice(s.price)}</td>
         <td class="year-cell">${s.pieces ? s.pieces.toLocaleString('id-ID') : '–'}</td>
@@ -535,7 +596,7 @@ function renderCards(sets) {
   if (!sets.length) return `<div class="empty"><span>🔍</span>No sets match your filter.</div>`;
   return `<div class="cards-grid">${sets.map(s => `
     <div class="lcard">
-      ${imgHtml(s.code, 'lg')}
+      ${imgHtml(s.img, s.code, 'lg')}
       <div class="lcard-head">
         <span class="code-badge">${s.code}</span>
         <span class="status-pill ${s.assembled ? 'pill-done' : 'pill-pending'}">${s.assembled ? '✅ Built' : '📦 Unbuilt'}</span>
@@ -556,7 +617,7 @@ function render(sets) {
   document.getElementById('resultCount').textContent = `${sets.length} of ${allSets.length} sets`;
   document.getElementById('collectionWrap').innerHTML =
     currentView === 'table' ? renderTable(sets) : renderCards(sets);
-  // Queue BrickLink price fetches for all visible sets
+  // Queue BrickLink price fetches and image loads for all visible sets
   priceQueue = [];
   sets.forEach(s => queueBLFetch(s.code));
 }
@@ -598,7 +659,7 @@ function runChecker() {
   if (hits.length) {
     const items = hits.map(m =>
       `<div class="result-item">
-        ${imgHtml(m.code)}
+        ${imgHtml(m.img, m.code)}
         <span class="code-badge" style="font-size:11px">${m.code}</span>
         <span><strong>${m.name}</strong> · ${m.year} · ${fmtPrice(m.price)}</span>
         <span class="status-pill ${m.assembled ? 'pill-done' : 'pill-pending'}" style="margin-left:auto">
