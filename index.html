@@ -167,7 +167,7 @@ td{padding:11px 16px;vertical-align:middle}
 
 <header class="header">
   <div class="header-left">
-    <span class="header-icon">🧱</span>
+    <img id="headerIcon" class="header-icon" src="" alt="🧱" style="width:48px;height:36px;object-fit:contain;border-radius:6px;background:rgba(255,255,255,0.08)">
     <div>
       <div class="header-title">My LEGO Technic Collection</div>
       <div class="header-sub" id="lastUpdate">Syncing from Google Sheets...</div>
@@ -746,6 +746,16 @@ async function init() {
     populateYearFilter(sets);
     render(sets);
     buildChart(sets);
+
+    // Set header icon to most expensive set's image
+    const priciest = sets.reduce((a, b) => b.price > a.price ? b : a, sets[0]);
+    if (priciest && priciest.img) {
+      const icon = document.getElementById('headerIcon');
+      icon.src = priciest.img;
+      icon.alt = priciest.name;
+      icon.title = priciest.name + ' (most expensive)';
+      icon.onerror = function() { this.onerror=null; this.alt='🧱'; this.style.fontSize='32px'; };
+    }
 
   } catch(err) {
     console.error(err);
